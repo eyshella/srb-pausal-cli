@@ -33,10 +33,13 @@ async function initProviders() {
  * Ensure rates are cached for a date or date interval for a specific pair.
  * Returns a map per date: { [date]: number|null }
  */
-export async function getRates(startDate, endDate, fromCurrency, toCurrency) {
+export async function getRates(startDate, endDate, fromCurrency, toCurrency, provider) {
   await initProviders();
   const dates = buildDateList(startDate, endDate);
   const result = {};
+  if (!provider || (provider !== 'ecb' && provider !== 'nbs')) {
+    throw new Error(`Invalid provider: ${provider}. Expected 'ecb' or 'nbs'.`);
+  }
 
   for (const date of dates) {
     // Try cache first
@@ -46,59 +49,85 @@ export async function getRates(startDate, endDate, fromCurrency, toCurrency) {
       continue;
     }
 
-    // Try ECB first when fromCurrency is EUR
-    if (fromCurrency === 'EUR') {
+    if (provider === 'ecb') {
       try {
         const europeRates = await europeProvider.getRates(date);
-        const direct = parseFloat(europeRates[toCurrency]);
-        if (direct && !isNaN(direct)) {
-          saveExchangeRate(date, fromCurrency, toCurrency, direct);
-          result[date] = direct;
+
+        const getEcb = (code) => {
+          const v = parseFloat(europeRates[code]);
+          return v && !isNaN(v) ? v : null;
+        };
+
+        if (fromCurrency === 'EUR') {
+          const direct = getEcb(toCurrency);
+          if (direct) {
+            rate = direct; // 1 EUR = direct TO
+          }
+        } else if (toCurrency === 'EUR') {
+          const fromPerEur = getEcb(fromCurrency);
+          if (fromPerEur) {
+            rate = 1 / fromPerEur; // 1 FROM = 1/fromPerEur EUR
+          }
+        } else {
+          const toPerEur = getEcb(toCurrency);
+          const fromPerEur = getEcb(fromCurrency);
+          if (toPerEur && fromPerEur) {
+            rate = toPerEur / fromPerEur; // cross via EUR
+          }
+        }
+
+        if (rate && !isNaN(rate)) {
+          saveExchangeRate(date, fromCurrency, toCurrency, rate);
+          result[date] = rate;
           continue;
+        } else {
+          throw new Error(`Could not compute ${fromCurrency}→${toCurrency} for ${date} using ECB`);
         }
       } catch (e) {
         console.error(`ECB provider failed for date = ${date}, toCurrency = ${toCurrency}, fromCurrency = ${fromCurrency}, error = ${e.message}`);
         throw e;
       }
-    }
+    } else if (provider === 'nbs') {
+      // Use NBS to compute via RSD base
+      try {
+        const rs = await serbiaProvider.getRates(date);
 
-    // Use NBS to compute via RSD base
-    try {
-      const rs = await serbiaProvider.getRates(date);
+        // Helper to parse safely
+        const get = (code) => {
+          const v = parseFloat(rs[code]);
+          return v && !isNaN(v) ? v : null;
+        };
 
-      // Helper to parse safely
-      const get = (code) => {
-        const v = parseFloat(rs[code]);
-        return v && !isNaN(v) ? v : null;
-      };
+        if (toCurrency === 'RSD') {
+          const fromRate = get(fromCurrency);
+          if (fromRate) {
+            rate = fromRate; // 1 FROM = fromRate RSD
+          }
+        } else if (fromCurrency === 'RSD') {
+          const toRate = get(toCurrency);
+          if (toRate) {
+            rate = 1 / toRate; // 1 RSD = 1/toRate TO
+          }
+        } else {
+          const fromRate = get(fromCurrency);
+          const toRate = get(toCurrency);
+          if (fromRate && toRate) {
+            rate = fromRate / toRate; // cross via RSD
+          }
+        }
 
-      if (toCurrency === 'RSD') {
-        const fromRate = get(fromCurrency);
-        if (fromRate) {
-          rate = fromRate; // 1 FROM = fromRate RSD
+        if (rate && !isNaN(rate)) {
+          saveExchangeRate(date, fromCurrency, toCurrency, rate);
+          result[date] = rate;
+        } else {
+          throw new Error(`Could not compute ${fromCurrency}→${toCurrency} for ${date} using NBS`);
         }
-      } else if (fromCurrency === 'RSD') {
-        const toRate = get(toCurrency);
-        if (toRate) {
-          rate = 1 / toRate; // 1 RSD = 1/toRate TO
-        }
-      } else {
-        const fromRate = get(fromCurrency);
-        const toRate = get(toCurrency);
-        if (fromRate && toRate) {
-          rate = fromRate / toRate; // cross via RSD
-        }
+      } catch (e) {
+        console.error(`NBS provider failed for date = ${date}, toCurrency = ${toCurrency}, fromCurrency = ${fromCurrency}, error = ${e.message}`);
+        throw e;
       }
-
-      if (rate && !isNaN(rate)) {
-        saveExchangeRate(date, fromCurrency, toCurrency, rate);
-        result[date] = rate;
-      } else {
-        throw new Error(`Could not compute ${fromCurrency}→${toCurrency} for ${date}`);
-      }
-    } catch (e) {
-      console.error(`NBS provider failed for date = ${date}, toCurrency = ${toCurrency}, fromCurrency = ${fromCurrency}, error = ${e.message}`);
-      throw e;
+    } else {
+      throw new Error(`Unsupported provider: ${provider}`);
     }
   }
   return result;
@@ -125,8 +154,8 @@ function buildDateList(start, end) {
  * Get rate between any two currencies for a date.
  * For EUR→X tries ECB first; otherwise falls back to NBS-derived cross rate.
  */
-export async function getRate(date, fromCurrency, toCurrency) {
-  const map = await getRates(date, date, fromCurrency, toCurrency);
+export async function getRate(date, fromCurrency, toCurrency, provider) {
+  const map = await getRates(date, date, fromCurrency, toCurrency, provider);
   const rate = map[date];
   if (rate == null) {
     throw new Error(`Rate not available for ${fromCurrency}→${toCurrency} on ${date}`);

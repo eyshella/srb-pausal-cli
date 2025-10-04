@@ -8,8 +8,18 @@ import fs from 'fs';
 import path from 'path';
 import { config } from '../config.js';
 
-// Use logo path from config
-const logoPath = path.resolve(process.cwd(), config.logoPath);
+// Resolve logo path if provided and exists
+let resolvedLogoPath = null;
+try {
+  if (config.logoPath) {
+    const abs = path.resolve(process.cwd(), config.logoPath);
+    if (fs.existsSync(abs)) {
+      resolvedLogoPath = abs;
+    }
+  }
+} catch (e) {
+  // ignore missing path or fs errors; logo stays null
+}
 
 // Register font that supports Serbian diacritics if provided
 if (config.fontPath) {
@@ -206,8 +216,10 @@ const InvoiceDocument = ({ payment, invoiceNumber }) => {
       <Page size="A4" style={styles.page}>
         {/* Top Section with Logo and Header */}
         <View style={styles.topSection}>
-          {/* Logo */}
-          <Image src={logoPath} style={styles.logo} />
+          {/* Logo (optional) */}
+          {resolvedLogoPath ? (
+            <Image src={resolvedLogoPath} style={styles.logo} />
+          ) : null}
           
           {/* Header */}
           <View style={styles.header}>

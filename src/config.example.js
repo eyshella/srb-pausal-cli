@@ -14,8 +14,8 @@ export const config = {
     city: "Your City",
     postalCode: "12345",
     country: "Serbia",
-    taxId: "123456789",
-    registrationNumber: "12345678",
+    taxId: "123456789", // PIB
+    registrationNumber: "12345678", // Matični broj
     iban: "RS35000000000000000000",
     swift: "BANKRSBG",
     email: "your.email@example.com",
@@ -29,8 +29,8 @@ export const config = {
     city: "Client City",
     postalCode: "12345",
     country: "Malta", // or another EU country
-    vatNumber: "MT12345678",
-    registrationNumber: "C12345"
+    vatNumber: "MT12345678", //VAT / EIB / PIB
+    registrationNumber: "C12345" //ID no / MB / Matični broj:
   },
 
   // Tax limits in RSD (Serbian Dinar)
@@ -42,7 +42,7 @@ export const config = {
 
   // Database
   database: {
-    path: "./data.db"
+    path: "./data.db" // Keep this as is
   },
 
   // Output directories
@@ -52,10 +52,9 @@ export const config = {
   },
 
   // Assets
-  logoPath: "./assets/logo.png", // Path to your company logo (PNG format)
+  logoPath: "./assets/logo.png", // Path to your company logo (optional)
 
   // Font (for Serbian characters like Š, Č, Ć, Ž)
-  // Provide a TTF/OTF font that supports Latin Extended (e.g., Noto Sans)
-  // Example path: ./src/assets/fonts/NotoSans-Regular.ttf
-  fontPath: "./assets/NotoSans.ttf"
+  // a TTF/OTF font that supports Latin Extended (e.g., Noto Sans)
+  fontPath: "./assets/NotoSans.ttf" // Keep this as is
 };

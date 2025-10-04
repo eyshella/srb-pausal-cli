@@ -51,14 +51,14 @@ export async function handleGenerateTable(startDate = null, endDate = null) {
     for (const payment of sortedPayments) {
       try {
         // EUR to RSD (ensure cached via bulk API)
-        const map = await getRates(payment.date, payment.date, 'EUR', 'RSD');
+        const map = await getRates(payment.date, payment.date, 'EUR', 'RSD', 'nbs');
         const eurToRsd = map[payment.date];
         
         // EUR to USD (from ECB - we need to get USD rate)
         // ECB provides rates FROM EUR, so 1 EUR = X USD
         let eurToUsd;
         try {
-          eurToUsd = await getRate(payment.date, 'EUR', 'USD');
+          eurToUsd = await getRate(payment.date, 'EUR', 'USD', 'ecb');
         } catch (error) {
           console.log(`Using fallback USD rate for ${payment.date}`);
           eurToUsd = 1.10; // Fallback approximate rate
