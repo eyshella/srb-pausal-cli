@@ -4,16 +4,33 @@
  */
 
 import React from 'react';
-import { Document, Page, Text, View, StyleSheet, pdf } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, pdf, Font } from '@react-pdf/renderer';
+import path from 'path';
 import fs from 'fs';
 import { config } from '../config.js';
+
+// Register font that supports Serbian diacritics if provided
+if (config.fontPath) {
+  try {
+    const fontAbs = path.resolve(process.cwd(), config.fontPath);
+    Font.register({
+      family: 'AppFont',
+      fonts: [
+        { src: fontAbs, fontWeight: 'normal' },
+        { src: fontAbs, fontWeight: 'bold' },
+      ],
+    });
+  } catch (e) {
+    // ignore
+  }
+}
 
 // Define styles
 const styles = StyleSheet.create({
   page: {
     padding: 30,
     fontSize: 8,
-    fontFamily: 'Helvetica',
+    fontFamily: config.fontPath ? 'AppFont' : 'Helvetica',
   },
   header: {
     marginBottom: 20,
@@ -32,17 +49,20 @@ const styles = StyleSheet.create({
   },
   headerBold: {
     fontSize: 8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: config.fontPath ? 'AppFont' : 'Helvetica',
+    fontWeight: 'bold',
     marginBottom: 3,
   },
   kpoLabel: {
     fontSize: 24,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: config.fontPath ? 'AppFont' : 'Helvetica',
+    fontWeight: 'bold',
     textAlign: 'right',
   },
   title: {
     fontSize: 14,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: config.fontPath ? 'AppFont' : 'Helvetica',
+    fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -59,7 +79,8 @@ const styles = StyleSheet.create({
     borderColor: '#000',
     backgroundColor: '#f5f5f5',
     fontSize: 7,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: config.fontPath ? 'AppFont' : 'Helvetica',
+    fontWeight: 'bold',
     textAlign: 'center',
   },
   tableRow: {
@@ -112,7 +133,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     padding: 8,
     marginTop: 10,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: config.fontPath ? 'AppFont' : 'Helvetica',
+    fontWeight: 'bold',
     fontSize: 9,
   },
   totalLabel: {
@@ -141,9 +163,9 @@ const KpoDocument = ({ payments, year }) => {
           <View style={styles.headerLeft}>
             <Text style={styles.headerBold}>PIB: {config.contractor.taxId}</Text>
             <Text style={styles.headerText}>
-              Taxpayer: {config.contractor.companyRegistration || config.contractor.name}
+              Taxpayer: {config.contractor.longName || config.contractor.shortName}
             </Text>
-            <Text style={styles.headerText}>Company Name: {config.contractor.name}</Text>
+            <Text style={styles.headerText}>Company Name: {config.contractor.shortName}</Text>
             <Text style={styles.headerText}>
               Address: {config.contractor.address} {config.contractor.city} {config.contractor.postalCode}
             </Text>

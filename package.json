@@ -1,14 +1,15 @@
 {
-  "name": "srb-factura-cli",
+  "name": "srb-pausal-cli",
   "version": "1.0.0",
   "description": "Invoice and KPO generator for Serbian contractor with EU company",
   "main": "dist/index.js",
   "type": "module",
   "bin": {
-    "srb-factura-cli": "./dist/index.js"
+    "srb-pausal-cli": "./dist/index.js"
   },
   "scripts": {
     "build": "vite build",
+    "postbuild": "chmod +x dist/index.js",
     "start": "npm run build && node dist/index.js"
   },
   "keywords": [
@@ -18,7 +19,7 @@
     "tax",
     "compliance"
   ],
-  "author": "",
+  "author": "Roman Ragozin (eyshella@gmail.com)",
   "license": "MIT",
   "dependencies": {
     "@react-pdf/renderer": "^3.4.5",

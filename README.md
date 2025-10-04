@@ -1,4 +1,4 @@
-# SRB Factura CLI
+# SRB Paušal CLI
 
 A Node.js CLI application for Serbian contractors working with EU companies. This tool helps manage payments, generate invoices, create KPO (Knjiga o ostvarenom prometu) reports, and ensure tax compliance according to Serbian regulations.
 
@@ -24,7 +24,7 @@ A Node.js CLI application for Serbian contractors working with EU companies. Thi
 1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd srb-factura-cli
+   cd srb-pausal-cli
    ```
 
 2. **Install dependencies**
@@ -44,7 +44,7 @@ A Node.js CLI application for Serbian contractors working with EU companies. Thi
 
 4. **Add your company logo**
    
-   Place your company logo (PNG format) at `src/assets/logo.png`
+   Place your company logo (PNG format) at `./assets/logo.png`
 
 5. **Build the application**
    ```bash
@@ -80,65 +80,65 @@ npm start -- <command> [options]
 Or if you want to use it globally, you can link it:
 ```bash
 npm link
-srb-factura-cli <command> [options]
+srb-pausal-cli <command> [options]
 ```
 
 ### Available Commands
 
 #### Add Payment
 ```bash
-srb-factura-cli add-payment <date> <amount_eur>
+srb-pausal-cli add-payment <date> <amount_eur>
 ```
 Example:
 ```bash
-srb-factura-cli add-payment 2025-01-15 5000.00
+srb-pausal-cli add-payment 2025-01-15 5000.00
 ```
 
 #### Delete Payment
 ```bash
-srb-factura-cli delete-payment <payment_id>
+srb-pausal-cli delete-payment <payment_id>
 ```
 
 #### Generate Invoice
 ```bash
-srb-factura-cli generate-invoice <payment_id>
+srb-pausal-cli generate-invoice <payment_id>
 ```
 Generates a professional PDF invoice for a specific payment.
 
 #### Generate All Invoices
 ```bash
-srb-factura-cli generate-all-invoices
+srb-pausal-cli generate-all-invoices
 ```
 Generates invoices for all payments in the database.
 
 #### Generate KPO Book
 ```bash
-srb-factura-cli generate-kpo <year>
+srb-pausal-cli generate-kpo <year>
 ```
 Example:
 ```bash
-srb-factura-cli generate-kpo 2025
+srb-pausal-cli generate-kpo 2025
 ```
 Generates the official KPO book (Knjiga o ostvarenom prometu) required by Serbian tax authorities.
 
 #### Generate Payment Table
 ```bash
-srb-factura-cli generate-table [--start YYYY-MM-DD] [--end YYYY-MM-DD]
+srb-pausal-cli generate-table [--start YYYY-MM-DD] [--end YYYY-MM-DD]
 ```
 Displays a formatted table with all payments showing amounts in EUR, RSD (from NBS), and USD (from ECB).
 
 Examples:
 ```bash
 # All payments
-srb-factura-cli generate-table
+srb-pausal-cli generate-table
 
 # Payments in specific date range
-srb-factura-cli generate-table --start 2025-01-01 --end 2025-12-31
+srb-pausal-cli generate-table --start 2025-01-01 --end 2025-12-31
 ```
 
 #### Generate Compliance Report
 ```bash
-srb-factura-cli generate-report
+srb-pausal-cli generate-report
 ```
 Generates a detailed report showing:
 - Income analysis for current calendar year
@@ -148,22 +148,22 @@ Generates a detailed report showing:
 
 #### Export Payments
 ```bash
-srb-factura-cli export-payments [output.csv]
+srb-pausal-cli export-payments [output.csv]
 ```
 Exports all payments to a CSV file (defaults to `payments.csv`).
 
 #### Import Payments
 ```bash
-srb-factura-cli import-payments <input.csv>
+srb-pausal-cli import-payments <input.csv>
 ```
 Imports payments from a CSV file.
 
 ## Project Structure
 
 ```
-srb-factura-cli/
+srb-pausal-cli/
 ├── src/
-│   ├── assets/              # Logo and other assets
+│   ├── assets/              # Static assets (logo, fonts)
 │   ├── commands/            # CLI command handlers
 │   │   ├── csvCommands.js
 │   │   ├── paymentCommands.js

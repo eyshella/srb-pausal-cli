@@ -14,7 +14,7 @@ const program = new Command();
 initDatabase();
 
 program
-  .name('srb-factura-cli')
+  .name('srb-pausal-cli')
   .description('Invoice and KPO generator for Serbian contractor with EU company')
   .version('1.0.0');
 

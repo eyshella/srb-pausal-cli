@@ -3,7 +3,7 @@
  */
 
 import React from 'react';
-import { Document, Page, Text, View, Image, StyleSheet, pdf } from '@react-pdf/renderer';
+import { Document, Page, Text, View, Image, StyleSheet, pdf, Font } from '@react-pdf/renderer';
 import fs from 'fs';
 import path from 'path';
 import { config } from '../config.js';
@@ -11,12 +11,30 @@ import { config } from '../config.js';
 // Use logo path from config
 const logoPath = path.resolve(process.cwd(), config.logoPath);
 
+// Register font that supports Serbian diacritics if provided
+if (config.fontPath) {
+  try {
+    const fontAbs = path.resolve(process.cwd(), config.fontPath);
+    Font.register({
+      family: 'AppFont',
+      fonts: [
+        { src: fontAbs, fontWeight: 'normal' },
+        { src: fontAbs, fontWeight: 'bold' },
+      ],
+    });
+  } catch (e) {
+    // Fallback silently to default Helvetica
+  }
+}
+
+const baseFontFamily = config.fontPath ? 'AppFont' : 'Helvetica';
+
 // Define styles
 const styles = StyleSheet.create({
   page: {
     padding: 40,
     fontSize: 9,
-    fontFamily: 'Helvetica',
+    fontFamily: baseFontFamily,
   },
   topSection: {
     flexDirection: 'row',
@@ -34,7 +52,8 @@ const styles = StyleSheet.create({
   },
   invoiceTitle: {
     fontSize: 18,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: baseFontFamily,
+    fontWeight: 'bold',
   },
   invoiceNumber: {
     fontSize: 18,
@@ -66,7 +85,8 @@ const styles = StyleSheet.create({
   },
   companyName: {
     fontSize: 10,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: baseFontFamily,
+    fontWeight: 'bold',
     marginBottom: 5,
   },
   detailText: {
@@ -80,7 +100,8 @@ const styles = StyleSheet.create({
     borderColor: '#000',
     paddingVertical: 5,
     fontSize: 8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: baseFontFamily,
+    fontWeight: 'bold',
     marginTop: 20,
   },
   tableRow: {
@@ -111,7 +132,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#e0e0e0',
     paddingVertical: 8,
     paddingHorizontal: 5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: baseFontFamily,
+    fontWeight: 'bold',
     fontSize: 10,
   },
   totalPaymentRow: {
@@ -119,7 +141,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 8,
     paddingHorizontal: 5,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: baseFontFamily,
+    fontWeight: 'bold',
     fontSize: 10,
     borderTopWidth: 1,
     borderBottomWidth: 1,
@@ -132,7 +155,8 @@ const styles = StyleSheet.create({
   },
   commentTitle: {
     fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: baseFontFamily,
+    fontWeight: 'bold',
     marginBottom: 5,
   },
   commentText: {
@@ -145,7 +169,8 @@ const styles = StyleSheet.create({
   },
   taxNoteTitle: {
     fontSize: 8,
-    fontFamily: 'Helvetica-Bold',
+    fontFamily: baseFontFamily,
+    fontWeight: 'bold',
     marginBottom: 5,
   },
   taxNoteText: {
@@ -177,15 +202,12 @@ const InvoiceDocument = ({ payment, invoiceNumber }) => {
               <Text style={styles.invoiceNumber}>{invoiceNumber}</Text>
             </View>
             <View style={styles.rightInfo}>
-              <Text style={styles.rightInfoText}>Invoice date / Datum</Text>
-              <Text style={styles.rightInfoText}>fakture</Text>
+              <Text style={styles.rightInfoText}>Invoice date / Datum fakture</Text>
               <Text style={styles.rightInfoText}>{formatDate(payment.date)}</Text>
-              <Text style={[styles.rightInfoText, { marginTop: 8 }]}>Trading date / Datum</Text>
-              <Text style={styles.rightInfoText}>prometa</Text>
+              <Text style={[styles.rightInfoText, { marginTop: 8 }]}>Trading date / Datum prometa</Text>
               <Text style={styles.rightInfoText}>{formatDate(payment.date)}</Text>
-              <Text style={[styles.rightInfoText, { marginTop: 8 }]}>Trading place / Mesto</Text>
-              <Text style={styles.rightInfoText}>prometa</Text>
-              <Text style={styles.rightInfoText}>{config.contractor.city}, {config.contractor.country}</Text>
+              <Text style={[styles.rightInfoText, { marginTop: 8 }]}>Trading place / Mesto prometa</Text>
+              <Text style={styles.rightInfoText}>{config.company.city}, {config.company.country}</Text>
             </View>
           </View>
         </View>
@@ -197,8 +219,8 @@ const InvoiceDocument = ({ payment, invoiceNumber }) => {
           {/* From / Od */}
           <View style={styles.column}>
             <Text style={styles.sectionTitle}>From / Od:</Text>
-            <Text style={styles.companyName}>{config.contractor.name.toUpperCase()}</Text>
-            <Text style={styles.detailText}>{config.contractor.companyRegistration || config.contractor.name.toUpperCase()}</Text>
+            <Text style={styles.companyName}>{(config.contractor.shortName || '').toUpperCase()}</Text>
+            <Text style={styles.detailText}>{config.contractor.longName || (config.contractor.shortName || '').toUpperCase()}</Text>
             <Text style={styles.detailText}>{config.contractor.address}</Text>
             <Text style={styles.detailText}>{config.contractor.city} {config.contractor.postalCode}</Text>
             <Text style={styles.detailText}>VAT / EIB / PIB: {config.contractor.taxId}</Text>
@@ -265,7 +287,7 @@ const InvoiceDocument = ({ payment, invoiceNumber }) => {
             <Text>{payment.amount_eur.toFixed(2)}</Text>
           </View>
           <View style={styles.col5}>
-            <Text>0,00</Text>
+            <Text>0.00</Text>
           </View>
           <View style={styles.col6}>
             <Text>{payment.amount_eur.toFixed(2)}</Text>
@@ -280,7 +302,7 @@ const InvoiceDocument = ({ payment, invoiceNumber }) => {
           </View>
           <View style={styles.totalRow}>
             <Text>DISCOUNT / RABAT (EUR)</Text>
-            <Text>0,00</Text>
+            <Text>0.00</Text>
           </View>
           <View style={styles.totalPaymentRow}>
             <Text>TOTAL FOR PAYMENT / UKUPNO ZA UPLATU (EUR)</Text>
@@ -293,11 +315,8 @@ const InvoiceDocument = ({ payment, invoiceNumber }) => {
           <Text style={styles.commentTitle}>COMMENT / OPIS USLUGE</Text>
           <Text style={styles.commentText}>Payment deadline is 15 days.</Text>
           <Text style={styles.commentText}>
-            When making the payment, please provide the reference number / Pri plaćanju fakture
+            When making the payment, please provide the reference number / Pri plaćanju fakture navedite poziv na broj {invoiceNumber}
           </Text>
-          <Text style={styles.commentText}>navedite poziv na broj {invoiceNumber}</Text>
-          <Text style={styles.commentText}>Identification number / Identifikacioni broj:</Text>
-          <Text style={styles.commentText}>{config.contractor.identificationCode || 'Generated automatically'}</Text>
           <Text style={styles.commentText}>
             Document is valid without stamp and signature / Faktura je važeća bez pečata i potpisa
           </Text>
@@ -315,10 +334,7 @@ const InvoiceDocument = ({ payment, invoiceNumber }) => {
             Not in the VAT system. / Poreski obveznik nije u sistemu PDV-a.
           </Text>
           <Text style={styles.taxNoteText}>
-            VAT not calculated on the invoice according to article 33 of Law on value added tax. / PDV
-          </Text>
-          <Text style={styles.taxNoteText}>
-            nije obračunat na fakturi u skladu sa članom 33. Zakona o porezu na dodatu vrednost.
+            VAT not calculated on the invoice according to article 33 of Law on value added tax. / PDV nije obračunat na fakturi u skladu sa članom 33. Zakona o porezu na dodatu vrednost.
           </Text>
         </View>
       </Page>

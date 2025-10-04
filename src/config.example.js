@@ -7,8 +7,8 @@
 export const config = {
   // Contractor details (your business information)
   contractor: {
-    name: "YOUR NAME PR",
-    companyRegistration: "YOUR NAME PR YOUR ACTIVITY YOUR CITY",
+    shortName: "YOUR NAME PR",
+    longName: "YOUR NAME PR YOUR ACTIVITY YOUR CITY",
     address: "Your Street 123",
     city: "Your City",
     postalCode: "12345",
@@ -19,7 +19,6 @@ export const config = {
     iban: "RS35000000000000000000",
     swift: "BANKRSBG",
     email: "your.email@example.com",
-    identificationCode: "", // Auto-generated if left empty
     activityCode: "6201 Računarsko programiranje" // Your business activity code
   },
 
@@ -53,5 +52,10 @@ export const config = {
   },
 
   // Assets
-  logoPath: "./src/assets/logo.png" // Path to your company logo (PNG format)
+  logoPath: "./assets/logo.png", // Path to your company logo (PNG format)
+
+  // Font (for Serbian characters like Š, Č, Ć, Ž)
+  // Provide a TTF/OTF font that supports Latin Extended (e.g., Noto Sans)
+  // Example path: ./src/assets/fonts/NotoSans-Regular.ttf
+  fontPath: "./assets/NotoSans.ttf"
 };
