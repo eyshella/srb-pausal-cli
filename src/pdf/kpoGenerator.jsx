@@ -32,50 +32,63 @@ const styles = StyleSheet.create({
     fontSize: 8,
     fontFamily: config.fontPath ? 'AppFont' : 'Helvetica',
   },
-  header: {
-    marginBottom: 20,
-  },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 30,
+    alignItems: 'flex-start',
+    marginBottom: 16,
   },
   headerLeft: {
     width: '70%',
   },
   headerText: {
-    fontSize: 8,
-    marginBottom: 3,
+    fontSize: 9,
+    marginBottom: 4,
   },
   headerBold: {
-    fontSize: 8,
+    fontSize: 9,
     fontFamily: config.fontPath ? 'AppFont' : 'Helvetica',
     fontWeight: 'bold',
-    marginBottom: 3,
+    marginBottom: 4,
+  },
+  kpoCenter: {
+    width: '30%',
+    alignItems: 'flex-end',
   },
   kpoLabel: {
-    fontSize: 24,
+    fontSize: 18,
     fontFamily: config.fontPath ? 'AppFont' : 'Helvetica',
     fontWeight: 'bold',
-    textAlign: 'right',
   },
   title: {
-    fontSize: 14,
+    fontSize: 12,
     fontFamily: config.fontPath ? 'AppFont' : 'Helvetica',
     fontWeight: 'bold',
     textAlign: 'center',
-    marginBottom: 20,
+    marginBottom: 14,
   },
   titleLine: {
     textAlign: 'center',
-    marginBottom: 3,
+    marginBottom: 2,
   },
   table: {
-    marginTop: 20,
+    marginTop: 10,
   },
-  tableHeader: {
+  tableHeaderTop: {
     flexDirection: 'row',
     borderWidth: 1,
+    borderColor: '#000',
+    backgroundColor: '#f5f5f5',
+    fontSize: 7,
+    fontFamily: config.fontPath ? 'AppFont' : 'Helvetica',
+    fontWeight: 'bold',
+    textAlign: 'center',
+  },
+  tableHeaderBottom: {
+    flexDirection: 'row',
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
     borderColor: '#000',
     backgroundColor: '#f5f5f5',
     fontSize: 7,
@@ -104,6 +117,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderColor: '#000',
     padding: 5,
+    justifyContent: 'center',
   },
   colProduct: {
     width: '16%',
@@ -127,6 +141,40 @@ const styles = StyleSheet.create({
     textAlign: 'right',
     justifyContent: 'center',
   },
+  headerCellTall: {
+    justifyContent: 'center',
+    padding: 5,
+    borderRightWidth: 1,
+    borderColor: '#000',
+  },
+  headerGroup: {
+    width: '33%',
+    borderRightWidth: 1,
+    borderColor: '#000',
+    paddingVertical: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerGroupRight: {
+    width: '17%',
+    paddingVertical: 5,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerSubRow: {
+    flexDirection: 'row',
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderBottomWidth: 1,
+    borderColor: '#000',
+    backgroundColor: '#f5f5f5',
+  },
+  headerSubCell: {
+    padding: 5,
+    textAlign: 'center',
+    borderRightWidth: 1,
+    borderColor: '#000',
+  },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -140,6 +188,21 @@ const styles = StyleSheet.create({
   totalLabel: {
     marginRight: 20,
   },
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginTop: 30,
+  },
+  footerBlock: {
+    width: '45%',
+    alignItems: 'center',
+  },
+  footerLine: {
+    marginTop: 20,
+    borderTopWidth: 1,
+    borderColor: '#000',
+    width: '80%',
+  },
 });
 
 // KPO Document Component
@@ -150,7 +213,17 @@ const KpoDocument = ({ payments, year }) => {
   };
 
   const formatNumber = (num) => {
-    return num.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, '.').replace('.', ',');
+    try {
+      return new Intl.NumberFormat('sr-RS', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(Number(num) || 0);
+    } catch (e) {
+      const fixed = (Number(num) || 0).toFixed(2);
+      const parts = fixed.split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      return `${parts[0]},${parts[1]}`;
+    }
   };
 
   const totalRsd = payments.reduce((sum, p) => sum + p.amount_rsd, 0);
@@ -162,55 +235,60 @@ const KpoDocument = ({ payments, year }) => {
         <View style={styles.headerRow}>
           <View style={styles.headerLeft}>
             <Text style={styles.headerBold}>PIB: {config.contractor.taxId}</Text>
-            <Text style={styles.headerText}>
-              Taxpayer: {config.contractor.longName || config.contractor.shortName}
-            </Text>
-            <Text style={styles.headerText}>Company Name: {config.contractor.shortName}</Text>
-            <Text style={styles.headerText}>
-              Address: {config.contractor.address} {config.contractor.city} {config.contractor.postalCode}
-            </Text>
-            <Text style={styles.headerText}>
-              Identification Number: {config.contractor.registrationNumber || ''}
-            </Text>
-            <Text style={styles.headerText}>
-              Activity Code: {config.contractor.activityCode || '6201 Računarsko programiranje'}
-            </Text>
+            <Text style={styles.headerText}>Obveznik: {config.contractor.longName}</Text>
+            <Text style={styles.headerText}>Firma - radnje: {config.contractor.shortName}</Text>
+            <Text style={styles.headerText}>Sedište: {config.contractor.address} {config.contractor.city} {config.contractor.postalCode}</Text>
+            <Text style={styles.headerText}>Šifra poreskog obveznika: {config.contractor.registrationNumber || ''}</Text>
+            <Text style={styles.headerText}>Šifra delatnosti: {config.contractor.activityCode || ''}</Text>
           </View>
-          <View>
+          <View style={styles.kpoCenter}>
             <Text style={styles.kpoLabel}>KPO</Text>
           </View>
         </View>
 
         {/* Title */}
         <View style={styles.title}>
-          <Text style={styles.titleLine}>Book of realized turnover</Text>
-          <Text style={styles.titleLine}>for lump sum taxed</Text>
-          <Text style={styles.titleLine}>taxpayers</Text>
+          <Text style={styles.titleLine}>KNJIGA O OSTVARENOM PROMETU</Text>
+          <Text style={styles.titleLine}>PAUŠALNO OPOREZOVANIH OBVEZNIKA</Text>
         </View>
 
         {/* Table */}
         <View style={styles.table}>
-          {/* Table Header */}
-          <View style={styles.tableHeader}>
-            <View style={styles.colNum}>
-              <Text>SERIAL</Text>
-              <Text>NUMBER</Text>
+          {/* Header top row with grouped columns */}
+          <View style={styles.tableHeaderTop}>
+            <View style={[styles.headerCellTall, { width: '8%' }]}>
+              <Text>Redni</Text>
+              <Text>broj</Text>
+              <Text>(1)</Text>
             </View>
-            <View style={styles.colDesc}>
-              <Text>DATE AND DESCRIPTION OF BOOKING</Text>
+            <View style={[styles.headerCellTall, { width: '42%' }]}>
+              <Text>Datum i opis knjiženja</Text>
+              <Text>(2)</Text>
             </View>
-            <View style={styles.colProduct}>
-              <Text>REVENUE FROM</Text>
-              <Text>PRODUCT SALES</Text>
+            <View style={styles.headerGroup}>
+              <Text>PRIHOD OD DELATNOSTI</Text>
             </View>
-            <View style={styles.colServices}>
-              <Text>REVENUE FROM</Text>
-              <Text>RENDERED SERVICES</Text>
+            <View style={styles.headerGroupRight}>
+              <Text>SVEGA</Text>
+              <Text>PRIHODI OD</Text>
+              <Text>DELATNOSTI</Text>
+              <Text>(3 + 4)</Text>
             </View>
-            <View style={styles.colTotal}>
-              <Text>TOTAL INCOME FROM</Text>
-              <Text>ACTIVITIES</Text>
+          </View>
+
+          {/* Header second row with sub columns */}
+          <View style={styles.headerSubRow}>
+            <View style={{ width: '8%', borderRightWidth: 1, borderColor: '#000' }} />
+            <View style={{ width: '42%', borderRightWidth: 1, borderColor: '#000' }} />
+            <View style={[styles.headerSubCell, { width: '16%' }]}>
+              <Text>od prodaje proizvoda</Text>
+              <Text>(3)</Text>
             </View>
+            <View style={[styles.headerSubCell, { width: '17%' }]}>
+              <Text>od izvršenih usluga</Text>
+              <Text>(4)</Text>
+            </View>
+            <View style={{ width: '17%', padding: 5 }} />
           </View>
 
           {/* Table Rows */}
@@ -220,10 +298,10 @@ const KpoDocument = ({ payments, year }) => {
                 <Text>{index + 1}</Text>
               </View>
               <View style={styles.colDesc}>
-                <Text>{config.company.name} {formatDate(payment.date)}</Text>
+                <Text>{formatDate(payment.date)} - {config.company.name}</Text>
               </View>
               <View style={styles.colProduct}>
-                <Text>0,00</Text>
+                <Text>{formatNumber(0)}</Text>
               </View>
               <View style={styles.colServices}>
                 <Text>{formatNumber(payment.amount_rsd)}</Text>
@@ -237,8 +315,18 @@ const KpoDocument = ({ payments, year }) => {
 
         {/* Total Row */}
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>TOTAL (RSD)</Text>
+          <Text style={styles.totalLabel}>UKUPNO (RSD)</Text>
           <Text>{formatNumber(totalRsd)}</Text>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <View style={styles.footerBlock}>
+            <Text>Sastavio: {config.contractor.person}</Text>
+          </View>
+          <View style={styles.footerBlock}>
+            <Text>Odgovorno lice: {config.contractor.person}</Text>
+          </View>
         </View>
       </Page>
     </Document>

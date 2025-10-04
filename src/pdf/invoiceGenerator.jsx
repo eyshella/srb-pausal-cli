@@ -187,6 +187,20 @@ const InvoiceDocument = ({ payment, invoiceNumber }) => {
     return `${day}.${month}.${year}`;
   };
 
+  const formatNumber = (num) => {
+    try {
+      return new Intl.NumberFormat('sr-RS', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+      }).format(Number(num) || 0);
+    } catch (e) {
+      const fixed = (Number(num) || 0).toFixed(2);
+      const parts = fixed.split('.');
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      return `${parts[0]},${parts[1]}`;
+    }
+  };
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -225,7 +239,7 @@ const InvoiceDocument = ({ payment, invoiceNumber }) => {
             <Text style={styles.detailText}>{config.contractor.city} {config.contractor.postalCode}</Text>
             <Text style={styles.detailText}>VAT / EIB / PIB: {config.contractor.taxId}</Text>
             <Text style={styles.detailText}>ID no / MB / Matični broj: {config.contractor.registrationNumber || ''}</Text>
-            <Text style={styles.detailText}>IBAN: {config.contractor.iban || config.contractor.accountNumber}</Text>
+            <Text style={styles.detailText}>IBAN: {config.contractor.iban || ''}</Text>
             <Text style={styles.detailText}>SWIFT: {config.contractor.swift || ''}</Text>
             <Text style={styles.detailText}>E-mail: {config.contractor.email || ''}</Text>
           </View>
@@ -281,16 +295,16 @@ const InvoiceDocument = ({ payment, invoiceNumber }) => {
             <Text>Komad</Text>
           </View>
           <View style={styles.col3}>
-            <Text>1,00</Text>
+            <Text>{formatNumber(1)}</Text>
           </View>
           <View style={styles.col4}>
-            <Text>{payment.amount_eur.toFixed(2)}</Text>
+            <Text>{formatNumber(payment.amount_eur)}</Text>
           </View>
           <View style={styles.col5}>
-            <Text>0.00</Text>
+            <Text>{formatNumber(0)}</Text>
           </View>
           <View style={styles.col6}>
-            <Text>{payment.amount_eur.toFixed(2)}</Text>
+            <Text>{formatNumber(payment.amount_eur)}</Text>
           </View>
         </View>
 
@@ -298,15 +312,15 @@ const InvoiceDocument = ({ payment, invoiceNumber }) => {
         <View style={styles.totalsSection}>
           <View style={styles.totalMainRow}>
             <Text>TOTAL / UKUPNO (EUR)</Text>
-            <Text>{payment.amount_eur.toFixed(2)}</Text>
+            <Text>{formatNumber(payment.amount_eur)}</Text>
           </View>
           <View style={styles.totalRow}>
             <Text>DISCOUNT / RABAT (EUR)</Text>
-            <Text>0.00</Text>
+            <Text>{formatNumber(0)}</Text>
           </View>
           <View style={styles.totalPaymentRow}>
             <Text>TOTAL FOR PAYMENT / UKUPNO ZA UPLATU (EUR)</Text>
-            <Text>{payment.amount_eur.toFixed(2)}</Text>
+            <Text>{formatNumber(payment.amount_eur)}</Text>
           </View>
         </View>
 

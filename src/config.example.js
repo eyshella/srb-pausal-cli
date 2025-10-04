@@ -9,13 +9,13 @@ export const config = {
   contractor: {
     shortName: "YOUR NAME PR",
     longName: "YOUR NAME PR YOUR ACTIVITY YOUR CITY",
+    person: "Your Firstname Lastname", // Responsible person (ime i prezime poreskog obveznika)
     address: "Your Street 123",
     city: "Your City",
     postalCode: "12345",
     country: "Serbia",
     taxId: "123456789",
     registrationNumber: "12345678",
-    accountNumber: "RS35000000000000000000",
     iban: "RS35000000000000000000",
     swift: "BANKRSBG",
     email: "your.email@example.com",
