@@ -1,6 +1,8 @@
 /**
- * Exchange rate utilities with database caching
- * Uses rate providers for fetching EUR to RSD rates
+ * Exchange rate utilities with database caching.
+ *
+ * Primary use-case in this app is EUR→RSD for KPO and invoices.
+ * Additional helper allows fetching other pairs on demand.
  */
 
 import { saveExchangeRate, getExchangeRate } from './database.js';
@@ -24,165 +26,112 @@ async function initProviders() {
   }
 }
 
+// =====================
+// Interval/bulk fetch and cache
+// =====================
 /**
- * Fetch EUR to RSD exchange rate using Serbia provider
- * @param {string} date - Date in YYYY-MM-DD format
- * @returns {Promise<number>} - Exchange rate
+ * Ensure rates are cached for a date or date interval for a specific pair.
+ * Returns a map per date: { [date]: number|null }
  */
-export async function fetchEurToRsdRate(date) {
-  // Check if we have it cached in database
-  const cached = getExchangeRate(date, 'EUR', 'RSD');
-  if (cached) {
-    console.log(`Using cached EUR/RSD rate for ${date}: ${cached}`);
-    return cached;
-  }
+export async function getRates(startDate, endDate, fromCurrency, toCurrency) {
+  await initProviders();
+  const dates = buildDateList(startDate, endDate);
+  const result = {};
 
-  try {
-    // Initialize providers if needed
-    await initProviders();
-
-    // Fetch rates from Serbia provider (NBS)
-    console.log(`Fetching EUR/RSD rate from NBS for ${date}...`);
-    const rates = await serbiaProvider.getRates(date);
-    
-    // EUR rate from NBS
-    const eurRate = parseFloat(rates['EUR']);
-    
-    if (!eurRate || isNaN(eurRate)) {
-      throw new Error('EUR rate not found in NBS response');
-    }
-
-    console.log(`Fetched EUR/RSD rate for ${date}: ${eurRate}`);
-
-    // Cache the rate in database
-    saveExchangeRate(date, 'EUR', 'RSD', eurRate);
-    
-    // Also cache other common currencies for future use
-    Object.entries(rates).forEach(([currency, rate]) => {
-      if (currency !== 'EUR') {
-        saveExchangeRate(date, currency, 'RSD', parseFloat(rate));
-      }
-    });
-
-    return eurRate;
-  } catch (error) {
-    console.error(`Error fetching exchange rate for ${date}:`, error.message);
-    
-    // Try fallback to Europe provider
-    try {
-      console.log(`Trying fallback to ECB for ${date}...`);
-      const europeRates = await europeProvider.getRates(date);
-      
-      // ECB provides rates FROM EUR, so we need RSD rate
-      const rsdRate = parseFloat(europeRates['RSD']);
-      
-      if (!rsdRate || isNaN(rsdRate)) {
-        throw new Error('RSD rate not found in ECB response');
-      }
-
-      console.log(`Fetched EUR/RSD rate from ECB for ${date}: ${rsdRate}`);
-      
-      // Cache the rate
-      saveExchangeRate(date, 'EUR', 'RSD', rsdRate);
-      
-      return rsdRate;
-    } catch (fallbackError) {
-      console.error(`Fallback also failed:`, fallbackError.message);
-      throw new Error(`Could not fetch exchange rate for ${date} from any provider`);
-    }
-  }
-}
-
-/**
- * Fetch EUR to RSD rates for multiple dates
- * @param {string[]} dates - Array of dates in YYYY-MM-DD format
- * @returns {Promise<Object>} - Object mapping dates to rates
- */
-export async function fetchMultipleRates(dates) {
-  const rates = {};
-  
   for (const date of dates) {
+    // Try cache first
+    let rate = getExchangeRate(date, fromCurrency, toCurrency);
+    if (rate) {
+      result[date] = rate;
+      continue;
+    }
+
+    // Try ECB first when fromCurrency is EUR
+    if (fromCurrency === 'EUR') {
+      try {
+        const europeRates = await europeProvider.getRates(date);
+        const direct = parseFloat(europeRates[toCurrency]);
+        if (direct && !isNaN(direct)) {
+          saveExchangeRate(date, fromCurrency, toCurrency, direct);
+          result[date] = direct;
+          continue;
+        }
+      } catch (e) {
+        console.error(`ECB provider failed for date = ${date}, toCurrency = ${toCurrency}, fromCurrency = ${fromCurrency}, error = ${e.message}`);
+        throw e;
+      }
+    }
+
+    // Use NBS to compute via RSD base
     try {
-      rates[date] = await fetchEurToRsdRate(date);
-    } catch (error) {
-      console.error(`Failed to fetch rate for ${date}:`, error.message);
-      rates[date] = null;
+      const rs = await serbiaProvider.getRates(date);
+
+      // Helper to parse safely
+      const get = (code) => {
+        const v = parseFloat(rs[code]);
+        return v && !isNaN(v) ? v : null;
+      };
+
+      if (toCurrency === 'RSD') {
+        const fromRate = get(fromCurrency);
+        if (fromRate) {
+          rate = fromRate; // 1 FROM = fromRate RSD
+        }
+      } else if (fromCurrency === 'RSD') {
+        const toRate = get(toCurrency);
+        if (toRate) {
+          rate = 1 / toRate; // 1 RSD = 1/toRate TO
+        }
+      } else {
+        const fromRate = get(fromCurrency);
+        const toRate = get(toCurrency);
+        if (fromRate && toRate) {
+          rate = fromRate / toRate; // cross via RSD
+        }
+      }
+
+      if (rate && !isNaN(rate)) {
+        saveExchangeRate(date, fromCurrency, toCurrency, rate);
+        result[date] = rate;
+      } else {
+        throw new Error(`Could not compute ${fromCurrency}→${toCurrency} for ${date}`);
+      }
+    } catch (e) {
+      console.error(`NBS provider failed for date = ${date}, toCurrency = ${toCurrency}, fromCurrency = ${fromCurrency}, error = ${e.message}`);
+      throw e;
     }
   }
-  
-  return rates;
+  return result;
 }
 
-/**
- * Get EUR to RSD rate for a date, fetching if not cached
- * @param {string} date - Date in YYYY-MM-DD format
- * @returns {Promise<number>} - Exchange rate
- */
-export async function getOrFetchRate(date) {
-  const cached = getExchangeRate(date, 'EUR', 'RSD');
-  if (cached) {
-    return cached;
+function buildDateList(start, end) {
+  const list = [];
+  if (!end) end = start;
+  const d1 = new Date(start);
+  const d2 = new Date(end);
+  for (let d = new Date(d1); d <= d2; d.setDate(d.getDate() + 1)) {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    list.push(`${year}-${month}-${day}`);
   }
-  return await fetchEurToRsdRate(date);
+  return list;
 }
 
+// =====================
+// Generic pair on demand
+// =====================
 /**
- * Get rate between any two currencies for a date
- * @param {string} date - Date in YYYY-MM-DD format
- * @param {string} fromCurrency - Source currency code
- * @param {string} toCurrency - Target currency code
- * @returns {Promise<number>} - Exchange rate
+ * Get rate between any two currencies for a date.
+ * For EUR→X tries ECB first; otherwise falls back to NBS-derived cross rate.
  */
 export async function getRate(date, fromCurrency, toCurrency) {
-  // Check cache first
-  const cached = getExchangeRate(date, fromCurrency, toCurrency);
-  if (cached) {
-    return cached;
+  const map = await getRates(date, date, fromCurrency, toCurrency);
+  const rate = map[date];
+  if (rate == null) {
+    throw new Error(`Rate not available for ${fromCurrency}→${toCurrency} on ${date}`);
   }
-
-  // If not in cache, we need to fetch and calculate
-  await initProviders();
-  
-  // Special case: EUR to USD or other currencies via ECB
-  if (fromCurrency === 'EUR') {
-    try {
-      const europeRates = await europeProvider.getRates(date);
-      const rate = parseFloat(europeRates[toCurrency]);
-      
-      if (rate && !isNaN(rate)) {
-        // Cache it
-        saveExchangeRate(date, fromCurrency, toCurrency, rate);
-        return rate;
-      }
-    } catch (error) {
-      console.log(`ECB doesn't have ${toCurrency} rate, trying Serbia provider...`);
-    }
-  }
-  
-  // Use Serbia provider as fallback
-  try {
-    const rates = await serbiaProvider.getRates(date);
-    
-    // Both currencies should be in the rates object (as rates to RSD)
-    const fromRate = parseFloat(rates[fromCurrency]);
-    const toRate = parseFloat(rates[toCurrency]);
-    
-    if (!fromRate || !toRate) {
-      throw new Error(`Currencies ${fromCurrency} or ${toCurrency} not found`);
-    }
-
-    // Calculate cross rate: fromCurrency to toCurrency
-    // If both are in RSD, we calculate: (1 FROM in RSD) / (1 TO in RSD)
-    const crossRate = fromRate / toRate;
-    
-    // Cache it
-    saveExchangeRate(date, fromCurrency, toCurrency, crossRate);
-    
-    return crossRate;
-  } catch (error) {
-    console.error(`Error calculating ${fromCurrency}/${toCurrency} rate:`, error.message);
-    throw error;
-  }
+  return rate;
 }
 
 /**

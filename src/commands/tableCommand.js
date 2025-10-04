@@ -3,7 +3,7 @@
  */
 
 import { getAllPayments } from '../database.js';
-import { getOrFetchRate, getRate } from '../exchangeRates.js';
+import { getRates, getRate } from '../exchangeRates.js';
 
 /**
  * Generate markdown table with payments in EUR, RSD, and USD
@@ -50,8 +50,9 @@ export async function handleGenerateTable(startDate = null, endDate = null) {
     const paymentsWithRates = [];
     for (const payment of sortedPayments) {
       try {
-        // EUR to RSD (from Serbian central bank)
-        const eurToRsd = await getOrFetchRate(payment.date);
+        // EUR to RSD (ensure cached via bulk API)
+        const map = await getRates(payment.date, payment.date, 'EUR', 'RSD');
+        const eurToRsd = map[payment.date];
         
         // EUR to USD (from ECB - we need to get USD rate)
         // ECB provides rates FROM EUR, so 1 EUR = X USD

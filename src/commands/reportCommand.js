@@ -3,7 +3,7 @@
  */
 
 import { getAllPayments } from '../database.js';
-import { getOrFetchRate } from '../exchangeRates.js';
+import { getRates } from '../exchangeRates.js';
 import { config } from '../config.js';
 
 /**
@@ -25,7 +25,8 @@ export async function handleGenerateReport() {
     const paymentsWithRsd = [];
     
     for (const payment of payments) {
-      const rate = await getOrFetchRate(payment.date);
+      const map = await getRates(payment.date);
+      const rate = map[payment.date]['EUR/RSD'];
       const amountRsd = payment.amount_eur * rate;
       paymentsWithRsd.push({
         ...payment,

@@ -3,7 +3,7 @@
  */
 
 import { getPaymentsByYear } from '../database.js';
-import { getOrFetchRate } from '../exchangeRates.js';
+import { getRates } from '../exchangeRates.js';
 import { generateKpoPDF } from '../pdf/kpoGenerator.jsx';
 import fs from 'fs';
 import path from 'path';
@@ -35,7 +35,8 @@ export async function handleGenerateKpo(year) {
     // Fetch exchange rates for all payments
     const paymentsWithRsd = [];
     for (const payment of payments) {
-      const rate = await getOrFetchRate(payment.date);
+      const map = await getRates(payment.date, payment.date, 'EUR', 'RSD');
+      const rate = map[payment.date];
       const amountRsd = payment.amount_eur * rate;
       paymentsWithRsd.push({
         ...payment,
