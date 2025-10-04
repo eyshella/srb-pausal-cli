@@ -1,0 +1,12 @@
+node_modules/
+*.db
+*.sqlite
+output/
+*.log
+.DS_Store
+dist/
+*.csv
+payments_*.csv
+requirements/
+logo.png
+src/config.js
