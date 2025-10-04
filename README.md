@@ -37,12 +37,9 @@ A Node.js CLI application for Serbian contractors working with EU companies. Thi
    cp src/config.example.js src/config.js
    ```
    
-   Then edit `src/config.js` with your personal and business information:
-   - Your contractor details (name, address, tax ID, bank account, etc.)
-   - Your client's company details
-   - Your hourly rate
+   **Then edit `src/config.js` with your personal and business information**
 
-4. **Add your company logo**
+4. **Add your company logo (optional)**
    
    Place your company logo (PNG format) at `./assets/logo.png`
 
