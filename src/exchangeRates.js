@@ -147,13 +147,6 @@ function buildDateList(start, end) {
   return list;
 }
 
-// =====================
-// Generic pair on demand
-// =====================
-/**
- * Get rate between any two currencies for a date.
- * For EUR→X tries ECB first; otherwise falls back to NBS-derived cross rate.
- */
 export async function getRate(date, fromCurrency, toCurrency, provider) {
   const map = await getRates(date, date, fromCurrency, toCurrency, provider);
   const rate = map[date];
