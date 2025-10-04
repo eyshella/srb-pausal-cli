@@ -77,74 +77,68 @@ After building, you can use the CLI:
 npm start -- <command> [options]
 ```
 
-Or if you want to use it globally, you can link it:
-```bash
-npm link
-srb-pausal-cli <command> [options]
-```
-
 ### Available Commands
 
 #### Add Payment
 ```bash
-srb-pausal-cli add-payment <date> <amount_eur>
+npm start add-payment <date> <amount_eur>
 ```
 Example:
 ```bash
-srb-pausal-cli add-payment 2025-01-15 5000.00
+npm start add-payment 2025-01-15 5000.00
 ```
 
 #### Delete Payment
 ```bash
-srb-pausal-cli delete-payment <payment_id>
+npm start delete-payment <payment_id>
 ```
 
 #### Generate Invoice
 ```bash
-srb-pausal-cli generate-invoice <payment_id>
+npm start generate-invoice <payment_id>
 ```
 Generates a professional PDF invoice for a specific payment.
 
 #### Generate All Invoices
 ```bash
-srb-pausal-cli generate-all-invoices
+npm start generate-all-invoices
 ```
 Generates invoices for all payments in the database.
 
 #### Generate KPO Book
 ```bash
-srb-pausal-cli generate-kpo <year>
+npm start generate-kpo <year>
 ```
 Example:
 ```bash
-srb-pausal-cli generate-kpo 2025
+npm start generate-kpo 2025
 ```
 Generates the official KPO book (Knjiga o ostvarenom prometu) required by Serbian tax authorities.
 
 #### Generate All KPO Books
 ```bash
-srb-pausal-cli generate-all-kpo
+npm start generate-all-kpo
 ```
 Finds all years with payments in the database and generates a KPO PDF per year into `output/kpo/`.
 
 #### Generate Payment Table
 ```bash
-srb-pausal-cli generate-table [--start YYYY-MM-DD] [--end YYYY-MM-DD]
+npm start generate-table [--start YYYY-MM-DD] [--end YYYY-MM-DD]
 ```
 Displays a formatted table with all payments showing amounts in EUR, RSD (from NBS), and USD (from ECB).
 
 Examples:
 ```bash
 # All payments
-srb-pausal-cli generate-table
+npm start generate-table
 
 # Payments in specific date range
-srb-pausal-cli generate-table --start 2025-01-01 --end 2025-12-31
+npm start generate-table --start 2025-01-01 --end 2025-12-31
 ```
 
 #### Generate Compliance Report
 ```bash
-srb-pausal-cli generate-report
+npm start generate-report
 ```
 Generates a detailed report showing:
 - Income analysis for current calendar year
@@ -154,13 +148,13 @@ Generates a detailed report showing:
 
 #### Export Payments
 ```bash
-srb-pausal-cli export-payments [output.csv]
+npm start export-payments [output.csv]
 ```
 Exports all payments to a CSV file (defaults to `payments.csv`).
 
 #### Import Payments
 ```bash
-srb-pausal-cli import-payments <input.csv>
+npm start import-payments <input.csv>
 ```
 Imports payments from a CSV file.
 
