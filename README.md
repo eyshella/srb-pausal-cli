@@ -121,6 +121,12 @@ srb-pausal-cli generate-kpo 2025
 ```
 Generates the official KPO book (Knjiga o ostvarenom prometu) required by Serbian tax authorities.
 
+#### Generate All KPO Books
+```bash
+srb-pausal-cli generate-all-kpo
+```
+Finds all years with payments in the database and generates a KPO PDF per year into `output/kpo/`.
+
 #### Generate Payment Table
 ```bash
 srb-pausal-cli generate-table [--start YYYY-MM-DD] [--end YYYY-MM-DD]
@@ -157,6 +163,29 @@ Exports all payments to a CSV file (defaults to `payments.csv`).
 srb-pausal-cli import-payments <input.csv>
 ```
 Imports payments from a CSV file.
+
+### CSV Format for Import
+
+The importer expects a simple comma-separated file with a header row. Required columns:
+
+- `date` — payment date in YYYY-MM-DD format
+- `amount_eur` — payment amount in EUR (decimal number, dot as separator)
+
+Optional columns (ignored if present): `id`, `created_at`.
+
+Example file:
+
+```csv
+date,amount_eur
+2025-01-15,2500.00
+2025-02-15,2500.00
+2025-03-15,2600.00
+```
+
+Notes:
+- Extra columns are ignored; missing required columns will cause an error.
+- Empty lines are ignored.
+- Each row is validated; invalid rows are reported and skipped.
 
 ## Project Structure
 

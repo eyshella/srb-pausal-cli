@@ -2,7 +2,7 @@
  * KPO (Knjiga o ostvarenom prometu) book generation command
  */
 
-import { getPaymentsByYear } from '../database.js';
+import { getPaymentsByYear, getAllPayments } from '../database.js';
 import { getRates } from '../exchangeRates.js';
 import { generateKpoPDF } from '../pdf/kpoGenerator.jsx';
 import fs from 'fs';
@@ -66,6 +66,30 @@ export async function handleGenerateKpo(year) {
     console.log(`  Output: ${outputPath}`);
   } catch (error) {
     console.error('Error generating KPO book:', error.message);
+    process.exit(1);
+  }
+}
+
+/**
+ * Generate KPO books for all years that have payments
+ */
+export async function handleGenerateAllKpo() {
+  try {
+    const payments = getAllPayments();
+    if (payments.length === 0) {
+      console.log('No payments found in database.');
+      return;
+    }
+
+    // Group payments by year
+    const years = Array.from(new Set(payments.map(p => p.date.substring(0, 4)))).sort();
+    console.log(`Generating KPO books for years: ${years.join(', ')}`);
+
+    for (const year of years) {
+      await handleGenerateKpo(year);
+    }
+  } catch (error) {
+    console.error('Error generating all KPO books:', error.message);
     process.exit(1);
   }
 }

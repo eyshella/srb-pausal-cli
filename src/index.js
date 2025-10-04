@@ -4,7 +4,7 @@ import { initDatabase, closeDatabase } from './database.js';
 import { handleAddPayment, handleDeletePayment } from './commands/paymentCommands.js';
 import { handleGenerateReport } from './commands/reportCommand.js';
 import { handleGenerateInvoice, handleGenerateAllInvoices } from './commands/invoiceCommands.js';
-import { handleGenerateKpo } from './commands/kpoCommand.js';
+import { handleGenerateKpo, handleGenerateAllKpo } from './commands/kpoCommand.js';
 import { handleGenerateTable } from './commands/tableCommand.js';
 import { handleExportPayments, handleImportPayments } from './commands/csvCommands.js';
 
@@ -74,6 +74,15 @@ program
   .argument('<year>', 'The calendar year (e.g., 2025)')
   .action(async (year) => {
     await handleGenerateKpo(year);
+    closeDatabase();
+  });
+
+// Command: generate-all-kpo
+program
+  .command('generate-all-kpo')
+  .description('Generate KPO books for all years that have payments')
+  .action(async () => {
+    await handleGenerateAllKpo();
     closeDatabase();
   });
 

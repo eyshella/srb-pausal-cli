@@ -25,8 +25,8 @@ export async function handleGenerateReport() {
     const paymentsWithRsd = [];
     
     for (const payment of payments) {
-      const map = await getRates(payment.date);
-      const rate = map[payment.date]['EUR/RSD'];
+      const map = await getRates(payment.date, payment.date, 'EUR', 'RSD');
+      const rate = map[payment.date];
       const amountRsd = payment.amount_eur * rate;
       paymentsWithRsd.push({
         ...payment,
